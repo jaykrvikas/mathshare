@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathShare — Jay's Resource Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1a12;
+    --bg2: #111f17;
+    --bg3: #162a1e;
+    --green: #1a3d28;
+    --accent: #4caf82;
+    --accent2: #82d4a8;
+    --gold: #c9a84c;
+    --gold2: #f0cc7a;
+    --text: #d4e8dc;
+    --muted: #7aaa90;
+    --border: rgba(76,175,130,0.18);
+    --chalk: rgba(255,255,255,0.06);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Math background canvas ── */
+  #mathbg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .math-symbol {
+    position: absolute;
+    font-family: 'Crimson Pro', serif;
+    color: rgba(76,175,130,0.07);
+    font-style: italic;
+    user-select: none;
+    animation: floatSym 20s ease-in-out infinite;
+  }
+
+  @keyframes floatSym {
+    0%,100% { transform: translateY(0px) rotate(0deg); opacity:0.05; }
+    50%      { transform: translateY(-20px) rotate(5deg); opacity:0.12; }
+  }
+
+  /* Grid lines like graph paper */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(76,175,130,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(76,175,130,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── App shell ── */
+  #app { position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,26,18,0.85);
+    backdrop-filter: blur(12px);
+    position: sticky; top:0; z-index:100;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #0d1a12; font-weight: 700;
+  }
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.02em;
+  }
+  .logo-text span { color: var(--gold); }
+
+  nav { display: flex; gap: 0.5rem; align-items: center; }
+
+  .nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.45rem 1.1rem;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--green);
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+  .nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d1a12;
+    font-weight: 500;
+  }
+  .nav-btn.primary:hover {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  /* ── Pages ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Hero / Home ── */
+  .hero {
+    min-height: calc(100vh - 65px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .hero-formula {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.7;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, var(--accent2) 30%, var(--gold2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+  .btn {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: none;
+    letter-spacing: 0.05em;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #3d9e6e);
+    color: #0d1a12;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(76,175,130,0.25);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(76,175,130,0.4);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent2);
+    background: var(--green);
+  }
+
+  .stats-row {
+    display: flex; gap: 3rem; margin-top: 4rem;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    font-style: italic;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 0.2rem;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  /* ── Auth modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: min(420px, 92vw);
+    position: relative;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity:0; }
+    to   { transform: translateY(0); opacity:1; }
+  }
+
+  .modal-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; color: var(--muted);
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+    width: 28px; height: 28px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: 50%; transition: 0.2s;
+  }
+  .modal-close:hover { background: var(--green); color: var(--text); }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--accent2);
+    margin-bottom: 0.4rem;
+  }
+  .modal p { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.8rem; }
+
+  .form-group { margin-bottom: 1.2rem; }
+  .form-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    transition: 0.2s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(76,175,130,0.1);
+  }
+  .form-input::placeholder { color: var(--muted); opacity: 0.5; }
+
+  .form-submit {
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--accent), #3d9e6e);
+    border: none;
+    border-radius: 8px;
+    color: #0d1a12;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.25s;
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+  .form-submit:hover {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    box-shadow: 0 4px 20px rgba(76,175,130,0.3);
+  }
+
+  .switch-auth {
+    text-align: center;
+    margin-top: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .switch-auth a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .msg { padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1rem; display: none; }
+  .msg.error { background: rgba(200,60,60,0.1); border: 1px solid rgba(200,60,60,0.3); color: #f08080; display: block; }
+  .msg.success { background: rgba(76,175,130,0.1); border: 1px solid rgba(76,175,130,0.3); color: var(--accent2); display: block; }
+
+  /* ── Files page ── */
+  .page-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--accent2);
+    margin-bottom: 0.4rem;
+  }
+  .page-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  /* ── File grid ── */
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .file-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    transition: 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .file-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: 0.3s;
+  }
+  .file-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .file-card:hover::after { opacity: 1; }
+
+  .file-icon {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+  .file-icon.pdf { background: rgba(220,80,60,0.15); }
+  .file-icon.ppt { background: rgba(200,100,40,0.15); }
+
+  .file-name {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .file-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .file-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-pdf { background: rgba(220,80,60,0.15); color: #f08080; border: 1px solid rgba(220,80,60,0.3); }
+  .badge-ppt { background: rgba(200,130,40,0.12); color: #e0a060; border: 1px solid rgba(200,130,40,0.25); }
+
+  .download-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: auto;
+    text-decoration: none;
+    justify-content: center;
+  }
+  .download-btn:hover {
+    background: var(--accent);
+    color: #0d1a12;
+  }
+  .download-btn.locked {
+    border-color: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  /* ── Admin upload ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: 0.3s;
+    cursor: pointer;
+    margin-bottom: 2rem;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(76,175,130,0.04);
+  }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .upload-zone h3 { font-family: 'Playfair Display', serif; color: var(--accent2); margin-bottom: 0.4rem; }
+  .upload-zone p { color: var(--muted); font-size: 0.9rem; }
+
+  #fileInput { display: none; }
+
+  .upload-list { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
+  .upload-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .upload-item-info { flex: 1; }
+  .upload-item-name { font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .upload-item-size { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .remove-btn {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 1rem; padding: 0.2rem 0.4rem;
+    border-radius: 4px; transition: 0.2s;
+  }
+  .remove-btn:hover { color: #f08080; background: rgba(200,60,60,0.1); }
+
+  /* drive link input */
+  .drive-section {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  .drive-section h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  /* ── Tag ── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    background: rgba(76,175,130,0.1);
+    border: 1px solid rgba(76,175,130,0.2);
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    display: flex; gap: 0.8rem; align-items: flex-start;
+    font-size: 0.95rem;
+  }
+  .alert-info {
+    background: rgba(76,130,175,0.1);
+    border: 1px solid rgba(76,130,175,0.25);
+    color: #80b8f0;
+  }
+  .alert-warn {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--gold2);
+  }
+
+  /* ── User chip ── */
+  .user-chip {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    background: var(--green);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent2);
+    letter-spacing: 0.03em;
+  }
+  .user-dot { width:7px; height:7px; border-radius:50%; background: var(--accent); }
+
+  /* ── Divider ── */
+  .divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 1rem; }
+    .logo-text { font-size: 1.1rem; }
+    nav { gap: 0.3rem; }
+    .nav-btn { padding: 0.35rem 0.7rem; font-size: 0.7rem; }
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 0.9rem 1.4rem;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent2);
+    z-index: 999;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: 0.3s;
+    max-width: 300px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; color: var(--muted); margin-bottom: 0.4rem; }
+
+  /* file class type select */
+  select.form-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237aaa90'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    padding-right: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Math background symbols -->
+<div id="mathbg"></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">∑</div>
+    <div class="logo-text">Math<span>Share</span></div>
+  </div>
+  <nav>
+    <button class="nav-btn active" onclick="showPage('home')">Home</button>
+    <button class="nav-btn" onclick="showPage('files')">Files</button>
+    <div id="adminNavBtn" style="display:none">
+      <button class="nav-btn" onclick="showPage('admin')">Upload</button>
+    </div>
+    <div id="authArea">
+      <button class="nav-btn primary" onclick="openModal('login')">Login</button>
+    </div>
+    <div id="userArea" style="display:none; align-items:center; gap:0.6rem;">
+      <div class="user-chip"><div class="user-dot"></div><span id="userNameChip">User</span></div>
+      <button class="nav-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+</header>
+
+<div id="app">
+
+<!-- ══════════════ HOME PAGE ══════════════ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-formula">∫ knowledge dt = ∞</div>
+    <h1>Jay's Mathematics<br>Resource Hub</h1>
+    <p>Download curated study materials — worksheets, presentations, and practice papers — crafted for CBSE Class 6–10 students.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="showPage('files')">Browse Files</button>
+      <button class="btn btn-outline" onclick="openModal('login')">Login to Download</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="statFiles">0</div>
+        <div class="stat-label">Resources</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6–10</div>
+        <div class="stat-label">Classes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Practice</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════ FILES PAGE ══════════════ -->
+<div class="page" id="page-files">
+  <div class="page-inner">
+    <div class="page-title">Resource Library</div>
+    <div class="page-sub">Download study materials. Login required to access files.</div>
+
+    <div id="loginAlert" class="alert alert-warn" style="display:none">
+      <span>⚠️</span>
+      <span>Please <a href="#" style="color:var(--gold);cursor:pointer" onclick="openModal('login')">login</a> to download files.</span>
+    </div>
+
+    <div id="fileGrid" class="file-grid">
+      <!-- populated by JS -->
+    </div>
+    <div id="emptyFiles" class="empty-state" style="display:none">
+      <div class="empty-icon">📂</div>
+      <h3>No files yet</h3>
+      <p>Files uploaded by the admin will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PAGE ══════════════ -->
+<div class="page" id="page-admin">
+  <div class="page-inner">
+    <div class="page-title">Upload Resources</div>
+    <div class="page-sub">Add new files by linking your Google Drive shareable links.</div>
+
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <span>Share your file on Google Drive → set access to "Anyone with the link" → paste the share link below. You remain the owner; others only download.</span>
+    </div>
+
+    <div class="card" style="margin-bottom:2rem;">
+      <h3 style="font-family:'Playfair Display',serif;color:var(--accent2);margin-bottom:1.5rem;">Add New File</h3>
+
+      <div class="form-group">
+        <label class="form-label">File Title</label>
+        <input class="form-input" id="fileTitle" type="text" placeholder="e.g. Class 10 Polynomials — Question Bank">
+      </div>
+      <div class="form-group">
+        <label class="form-label">File Type</label>
+        <select class="form-input" id="fileType">
+          <option value="pdf">PDF</option>
+          <option value="ppt">PPT / PPTX</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Class / Subject</label>
+        <input class="form-input" id="fileClass" type="text" placeholder="e.g. Class 10 — Mathematics">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Drive Share Link</label>
+        <input class="form-input" id="driveLink" type="url" placeholder="https://drive.google.com/file/d/ABC123/view?usp=sharing">
+        <div style="margin-top:0.6rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.8rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);line-height:1.9;">
+          <div style="color:var(--gold);margin-bottom:0.3rem;font-size:0.75rem;">✅ Yeh formats chalenge:</div>
+          <div>drive.google.com/file/d/<span style="color:var(--accent)">FILE_ID</span>/view?usp=sharing</div>
+          <div>drive.google.com/open?id=<span style="color:var(--accent)">FILE_ID</span></div>
+          <div>docs.google.com/presentation/d/<span style="color:var(--accent)">FILE_ID</span>/edit</div>
+          <div style="margin-top:0.5rem;color:var(--gold);font-size:0.72rem;">⚠️ Drive mein: Right click → Share → Anyone with the link → Viewer</div>
+        </div>
+      </div>
+
+      <div id="addFileMsg" class="msg"></div>
+      <button class="btn btn-primary" style="width:100%;padding:0.85rem;" onclick="addFile()">Add File to Library</button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="page-title" style="font-size:1.4rem;margin-bottom:0.4rem;">Manage Files</div>
+    <div id="adminFileList" class="file-grid"></div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ══════════════ LOGIN MODAL ══════════════ -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">×</button>
+    <h2>Welcome Back</h2>
+    <p id="loginModalSub">Login to access and download resources.</p>
+    <div id="loginMsg" class="msg"></div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="loginEmail" type="email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="form-submit" onclick="doLogin()">Login →</button>
+    <div class="switch-auth">Don't have an account? <a onclick="switchModal('login','register')">Register</a></div>
+  </div>
+</div>
+
+<!-- ══════════════ REGISTER MODAL ══════════════ -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('register')">×</button>
+    <h2>Create Account</h2>
+    <p>Register to access all study materials.</p>
+    <div id="regMsg" class="msg"></div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="regName" type="text" placeholder="Your full name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="regEmail" type="email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="regPass" type="password" placeholder="Min 6 characters">
+    </div>
+    <button class="form-submit" onclick="doRegister()">Create Account →</button>
+    <div class="switch-auth">Already registered? <a onclick="switchModal('register','login')">Login</a></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════ STATE ══════════
+const ADMIN_EMAIL = 'jay@admin.com'; // Change this to your email
+const ADMIN_PASS  = 'jay@1234';      // Change this to your password
+
+let state = {
+  user: null, // { name, email, isAdmin }
+  files: JSON.parse(localStorage.getItem('mathshare_files') || '[]')
+};
+
+function saveFiles() {
+  localStorage.setItem('mathshare_files', JSON.stringify(state.files));
+}
+
+// ══════════ MATH BG ══════════
+const symbols = ['∫','∑','π','√','∞','∂','∇','Δ','α','β','γ','λ','θ','≈','≠','≤','≥','∈','∀','∃','x²','ax²','dx','lim','sin','cos','tan','log','f(x)','P(A)'];
+const bg = document.getElementById('mathbg');
+for (let i = 0; i < 28; i++) {
+  const el = document.createElement('div');
+  el.className = 'math-symbol';
+  el.textContent = symbols[i % symbols.length];
+  el.style.cssText = `
+    left: ${Math.random()*100}%;
+    top: ${Math.random()*100}%;
+    font-size: ${1 + Math.random()*4}rem;
+    animation-delay: ${Math.random()*10}s;
+    animation-duration: ${15+Math.random()*15}s;
+  `;
+  bg.appendChild(el);
+}
+
+// ══════════ PAGE NAV ══════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (page === 'files') renderFileGrid();
+  if (page === 'admin') renderAdminList();
+  if (page === 'home') updateStats();
+}
+
+// ══════════ MODALS ══════════
+function openModal(name) { document.getElementById('modal-'+name).classList.add('open'); }
+function closeModal(name) { document.getElementById('modal-'+name).classList.remove('open'); }
+function switchModal(from, to) { closeModal(from); openModal(to); }
+
+// close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ══════════ AUTH ══════════
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass   = document.getElementById('loginPass').value;
+  const msg    = document.getElementById('loginMsg');
+  if (!email || !pass) { showMsg(msg,'error','Please fill all fields.'); return; }
+
+  // Admin check
+  if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+    setUser({ name: 'Admin (Jay)', email, isAdmin: true });
+    closeModal('login');
+    showToast('Welcome back, Admin! 🎓');
+    showPage('admin');
+    return;
+  }
+
+  // Regular user from localStorage
+  const users = JSON.parse(localStorage.getItem('mathshare_users') || '[]');
+  const user  = users.find(u => u.email === email && u.pass === pass);
+  if (!user) { showMsg(msg,'error','Invalid email or password.'); return; }
+  setUser({ name: user.name, email, isAdmin: false });
+  closeModal('login');
+  showToast(`Welcome, ${user.name}! 📚`);
+  showPage('files');
+}
+
+function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const msg   = document.getElementById('regMsg');
+  if (!name||!email||!pass) { showMsg(msg,'error','Please fill all fields.'); return; }
+  if (pass.length < 6) { showMsg(msg,'error','Password must be at least 6 characters.'); return; }
+  if (email === ADMIN_EMAIL) { showMsg(msg,'error','This email is reserved.'); return; }
+
+  const users = JSON.parse(localStorage.getItem('mathshare_users') || '[]');
+  if (users.find(u => u.email === email)) { showMsg(msg,'error','Email already registered.'); return; }
+  users.push({ name, email, pass });
+  localStorage.setItem('mathshare_users', JSON.stringify(users));
+  showMsg(msg,'success','Account created! Logging you in…');
+  setTimeout(() => {
+    setUser({ name, email, isAdmin: false });
+    closeModal('register');
+    showToast(`Welcome, ${name}! 📚`);
+    showPage('files');
+  }, 800);
+}
+
+function setUser(user) {
+  state.user = user;
+  document.getElementById('authArea').style.display = 'none';
+  document.getElementById('userArea').style.display  = 'flex';
+  document.getElementById('userNameChip').textContent = user.name;
+  document.getElementById('adminNavBtn').style.display = user.isAdmin ? 'block' : 'none';
+}
+
+function logout() {
+  state.user = null;
+  document.getElementById('authArea').style.display = 'flex';
+  document.getElementById('userArea').style.display  = 'none';
+  document.getElementById('adminNavBtn').style.display = 'none';
+  showPage('home');
+  showToast('Logged out successfully.');
+}
+
+// ══════════ FILES ══════════
+function extractDriveFileId(url) {
+  // Format 1: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  // Format 2: https://drive.google.com/open?id=FILE_ID
+  // Format 3: https://drive.google.com/uc?id=FILE_ID
+  // Format 4: https://docs.google.com/presentation/d/FILE_ID/edit
+  // Format 5: https://docs.google.com/document/d/FILE_ID/edit
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/d\/([a-zA-Z0-9_-]{10,})/,
+    /[?&]id=([a-zA-Z0-9_-]{10,})/,
+    /\/presentation\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/document\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/spreadsheets\/d\/([a-zA-Z0-9_-]{10,})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function addFile() {
+  const title = document.getElementById('fileTitle').value.trim();
+  const type  = document.getElementById('fileType').value;
+  const cls   = document.getElementById('fileClass').value.trim();
+  const link  = document.getElementById('driveLink').value.trim();
+  const msg   = document.getElementById('addFileMsg');
+
+  if (!title || !link) { showMsg(msg,'error','Title aur Drive link dono zaroori hain.'); return; }
+
+  const fileId = extractDriveFileId(link);
+  if (!fileId) {
+    showMsg(msg,'error','Google Drive link sahi nahi laga. Niche wala guide dekho.');
+    return;
+  }
+
+  // Direct download link (works for PDFs and PPTs)
+  const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  // Also store a view link as fallback
+  const viewLink = `https://drive.google.com/file/d/${fileId}/view`;
+
+  const file = {
+    id: Date.now(),
+    title, type, cls,
+    link: directLink,
+    viewLink: viewLink,
+    fileId: fileId,
+    date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+  };
+  state.files.unshift(file);
+  saveFiles();
+  showMsg(msg,'success','File library mein add ho gayi! ✓');
+  document.getElementById('fileTitle').value='';
+  document.getElementById('fileClass').value='';
+  document.getElementById('driveLink').value='';
+  renderAdminList();
+  updateStats();
+}
+
+function deleteFile(id) {
+  if (!confirm('Remove this file from the library?')) return;
+  state.files = state.files.filter(f => f.id !== id);
+  saveFiles();
+  renderAdminList();
+  renderFileGrid();
+  updateStats();
+  showToast('File removed.');
+}
+
+function renderFileGrid() {
+  const grid  = document.getElementById('fileGrid');
+  const empty = document.getElementById('emptyFiles');
+  const alert = document.getElementById('loginAlert');
+  const loggedIn = !!state.user;
+
+  if (!loggedIn) { alert.style.display='flex'; } else { alert.style.display='none'; }
+
+  if (!state.files.length) {
+    grid.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = state.files.map(f => `
+    <div class="file-card">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div class="file-icon ${f.type}">${f.type==='pdf'?'📄':'📊'}</div>
+        <span class="file-badge badge-${f.type}">${f.type.toUpperCase()}</span>
+      </div>
+      <div class="file-name">${f.title}</div>
+      ${f.cls ? `<div class="file-meta">📚 ${f.cls}</div>` : ''}
+      <div class="file-meta">🗓 ${f.date}</div>
+      ${loggedIn
+        ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+             <a href="${f.link}" target="_blank" class="download-btn" style="flex:1">⬇ Download</a>
+             <a href="${f.viewLink}" target="_blank" class="download-btn" style="flex:1;border-color:var(--gold);color:var(--gold)">👁 View</a>
+           </div>`
+        : `<button class="download-btn locked" onclick="openModal('login')">🔒 Login to Download</button>`
+      }
+    </div>
+  `).join('');
+}
+
+function renderAdminList() {
+  const el = document.getElementById('adminFileList');
+  if (!state.files.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><h3>No files uploaded yet</h3></div>';
+    return;
+  }
+  el.innerHTML = state.files.map(f => `
+    <div class="file-card">
+      <div style="display:flex;align-items:center;gap:0.8rem;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:0.8rem;">
+          <div class="file-icon ${f.type}">${f.type==='pdf'?'📄':'📊'}</div>
+          <span class="file-badge badge-${f.type}">${f.type.toUpperCase()}</span>
+        </div>
+        <button class="remove-btn" onclick="deleteFile(${f.id})" title="Remove">🗑</button>
+      </div>
+      <div class="file-name">${f.title}</div>
+      ${f.cls ? `<div class="file-meta">📚 ${f.cls}</div>` : ''}
+      <div class="file-meta">🗓 ${f.date}</div>
+      <a href="${f.link}" target="_blank" class="download-btn">⬇ Test Download</a>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('statFiles').textContent = state.files.length;
+}
+
+// ══════════ UTILS ══════════
+function showMsg(el, type, text) {
+  el.className = 'msg ' + type;
+  el.textContent = text;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display='none', 4000);
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════ INIT ══════════
+updateStats();
+</script>
+</body>
+</html>
