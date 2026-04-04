@@ -753,8 +753,16 @@
       </div>
       <div class="form-group">
         <label class="form-label">Google Drive Share Link</label>
-        <input class="form-input" id="driveLink" type="url" placeholder="https://drive.google.com/file/d/...">
+        <input class="form-input" id="driveLink" type="url" placeholder="https://drive.google.com/file/d/ABC123/view?usp=sharing">
+        <div style="margin-top:0.6rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.8rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);line-height:1.9;">
+          <div style="color:var(--gold);margin-bottom:0.3rem;font-size:0.75rem;">✅ Yeh formats chalenge:</div>
+          <div>drive.google.com/file/d/<span style="color:var(--accent)">FILE_ID</span>/view?usp=sharing</div>
+          <div>drive.google.com/open?id=<span style="color:var(--accent)">FILE_ID</span></div>
+          <div>docs.google.com/presentation/d/<span style="color:var(--accent)">FILE_ID</span>/edit</div>
+          <div style="margin-top:0.5rem;color:var(--gold);font-size:0.72rem;">⚠️ Drive mein: Right click → Share → Anyone with the link → Viewer</div>
+        </div>
       </div>
+
       <div id="addFileMsg" class="msg"></div>
       <button class="btn btn-primary" style="width:100%;padding:0.85rem;" onclick="addFile()">Add File to Library</button>
     </div>
@@ -932,43 +940,63 @@ function logout() {
 }
 
 // ══════════ FILES ══════════
+function extractDriveFileId(url) {
+  // Format 1: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  // Format 2: https://drive.google.com/open?id=FILE_ID
+  // Format 3: https://drive.google.com/uc?id=FILE_ID
+  // Format 4: https://docs.google.com/presentation/d/FILE_ID/edit
+  // Format 5: https://docs.google.com/document/d/FILE_ID/edit
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/d\/([a-zA-Z0-9_-]{10,})/,
+    /[?&]id=([a-zA-Z0-9_-]{10,})/,
+    /\/presentation\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/document\/d\/([a-zA-Z0-9_-]{10,})/,
+    /\/spreadsheets\/d\/([a-zA-Z0-9_-]{10,})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 function addFile() {
   const title = document.getElementById('fileTitle').value.trim();
   const type  = document.getElementById('fileType').value;
   const cls   = document.getElementById('fileClass').value.trim();
   const link  = document.getElementById('driveLink').value.trim();
   const msg   = document.getElementById('addFileMsg');
-  if (!title||!link) { showMsg(msg,'error','Title and Drive link are required.'); return; }
-  if (!link.includes('drive.google.com')) { showMsg(msg,'error','Please enter a valid Google Drive link.'); return; }
 
-  // Convert view link to direct download
-  const directLink = getDriveDownloadLink(link);
+  if (!title || !link) { showMsg(msg,'error','Title aur Drive link dono zaroori hain.'); return; }
+
+  const fileId = extractDriveFileId(link);
+  if (!fileId) {
+    showMsg(msg,'error','Google Drive link sahi nahi laga. Niche wala guide dekho.');
+    return;
+  }
+
+  // Direct download link (works for PDFs and PPTs)
+  const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  // Also store a view link as fallback
+  const viewLink = `https://drive.google.com/file/d/${fileId}/view`;
+
   const file = {
     id: Date.now(),
-    title, type, cls, link: directLink, originalLink: link,
+    title, type, cls,
+    link: directLink,
+    viewLink: viewLink,
+    fileId: fileId,
     date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
   };
   state.files.unshift(file);
   saveFiles();
-  showMsg(msg,'success','File added to library! ✓');
+  showMsg(msg,'success','File library mein add ho gayi! ✓');
   document.getElementById('fileTitle').value='';
   document.getElementById('fileClass').value='';
   document.getElementById('driveLink').value='';
   renderAdminList();
   updateStats();
-}
-
-function getDriveDownloadLink(url) {
-  // Convert share URL to download/preview URL
-  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (match) return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-  return url;
-}
-
-function getPreviewLink(url) {
-  const match = url.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
-  return url;
 }
 
 function deleteFile(id) {
@@ -1003,7 +1031,10 @@ function renderFileGrid() {
       ${f.cls ? `<div class="file-meta">📚 ${f.cls}</div>` : ''}
       <div class="file-meta">🗓 ${f.date}</div>
       ${loggedIn
-        ? `<a href="${f.link}" target="_blank" class="download-btn">⬇ Download File</a>`
+        ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+             <a href="${f.link}" target="_blank" class="download-btn" style="flex:1">⬇ Download</a>
+             <a href="${f.viewLink}" target="_blank" class="download-btn" style="flex:1;border-color:var(--gold);color:var(--gold)">👁 View</a>
+           </div>`
         : `<button class="download-btn locked" onclick="openModal('login')">🔒 Login to Download</button>`
       }
     </div>
