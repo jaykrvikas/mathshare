@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathShare — Jay Sir's Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1a12;--bg2:#111f17;--bg3:#162a1e;--green:#1a3d28;--accent:#4caf82;--accent2:#82d4a8;--gold:#c9a84c;--gold2:#f0cc7a;--text:#d4e8dc;--muted:#7aaa90;--border:rgba(76,175,130,0.18);--red:#e05555;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(76,175,130,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(76,175,130,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+#mathbg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.msym{position:absolute;color:rgba(76,175,130,0.06);font-style:italic;user-select:none;animation:floatS 20s ease-in-out infinite;}
+@keyframes floatS{0%,100%{transform:translateY(0) rotate(0deg);opacity:.05;}50%{transform:translateY(-18px) rotate(4deg);opacity:.1;}}
+#app{position:relative;z-index:1;}
+
+/* LOADER */
+#pageLoader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;}
+#pageLoader.hide{animation:fadeOut .5s forwards;}
+@keyframes fadeOut{to{opacity:0;pointer-events:none;}}
+.ld-icon{font-family:'Playfair Display',serif;font-size:3rem;color:var(--accent2);animation:ld 1.5s ease-in-out infinite;}
+@keyframes ld{0%,100%{opacity:1;}50%{opacity:.3;}}
+.ld-txt{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted);letter-spacing:.1em;}
+#topBar{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));z-index:9998;opacity:0;transition:opacity .3s;}
+#topBar.on{opacity:1;}
+
+/* HEADER */
+header{padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(13,26,18,0.93);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:.6rem;cursor:pointer;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#0d1a12;font-weight:700;}
+.logo-text{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--accent2);}
+.logo-text span{color:var(--gold);}
+nav{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;}
+.nb{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.4rem 1rem;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.75rem;cursor:pointer;transition:all .2s;}
+.nb:hover{background:var(--green);border-color:var(--accent);color:var(--accent2);}
+.nb.pri{background:var(--accent);border-color:var(--accent);color:#0d1a12;font-weight:600;}
+.nb.pri:hover{background:var(--accent2);}
+.page{display:none;}.page.active{display:block;}
+
+/* HERO */
+.hero{min-height:calc(100vh - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;}
+.hf{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--accent);letter-spacing:.1em;margin-bottom:1.2rem;opacity:.7;}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,6vw,3.8rem);font-weight:700;line-height:1.1;margin-bottom:1rem;background:linear-gradient(135deg,var(--accent2) 30%,var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero p{font-size:1.15rem;color:var(--muted);max-width:500px;line-height:1.7;margin-bottom:2.5rem;}
+.ccards{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;}
+.ccard{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.5rem 3rem;cursor:pointer;transition:all .3s;text-align:center;min-width:190px;}
+.ccard:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 16px 40px rgba(0,0,0,.4);}
+.cnum{font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:700;font-style:italic;line-height:1;margin-bottom:.4rem;}
+.ccard:nth-child(1) .cnum{color:var(--accent2);}
+.ccard:nth-child(2) .cnum{color:var(--gold2);}
+.clbl{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.csub{font-size:.9rem;color:var(--muted);margin-top:.3rem;}
+.srow{display:flex;gap:2.5rem;margin-top:3.5rem;flex-wrap:wrap;justify-content:center;}
+.st{text-align:center;}
+.stn{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);font-style:italic;}
+.stl{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.1em;margin-top:.2rem;}
+
+/* PAGE */
+.pi{max-width:960px;margin:0 auto;padding:2rem 1.5rem;}
+.bbtn{display:inline-flex;align-items:center;gap:.4rem;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.4rem .9rem;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.73rem;cursor:pointer;transition:.2s;margin-bottom:1.5rem;}
+.bbtn:hover{border-color:var(--accent);color:var(--accent2);}
+.ptit{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent2);margin-bottom:.3rem;}
+.psub{color:var(--muted);font-size:.95rem;margin-bottom:1.8rem;}
+.tabs{display:flex;gap:.5rem;margin-bottom:2rem;flex-wrap:wrap;}
+.tb{padding:.5rem 1.3rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.76rem;cursor:pointer;transition:.2s;}
+.tb:hover{border-color:var(--accent);color:var(--accent2);}
+.tb.active{background:var(--green);border-color:var(--accent);color:var(--accent2);}
+
+/* FILE GRID */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:1rem;}
+.fc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.3rem;display:flex;flex-direction:column;gap:.7rem;transition:.25s;position:relative;overflow:hidden;}
+.fc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:.3s;}
+.fc:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.3);}
+.fc:hover::after{opacity:1;}
+.fic{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.fic.n{background:rgba(220,80,60,.15);}
+.fic.p{background:rgba(200,100,40,.15);}
+.fic.q{background:rgba(155,114,224,.15);}
+.fn{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);font-weight:600;line-height:1.3;}
+.fm{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);}
+.fbg{display:inline-block;padding:.18rem .55rem;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;}
+.bn{background:rgba(220,80,60,.15);color:#f08080;border:1px solid rgba(220,80,60,.3);}
+.bp{background:rgba(200,130,40,.12);color:#e0a060;border:1px solid rgba(200,130,40,.25);}
+.bq{background:rgba(155,114,224,.12);color:#c0a0f0;border:1px solid rgba(155,114,224,.25);}
+.dbs{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto;}
+.db{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:transparent;border:1px solid var(--accent);border-radius:7px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.72rem;cursor:pointer;transition:.2s;text-decoration:none;justify-content:center;flex:1;}
+.db:hover{background:var(--accent);color:#0d1a12;}
+.db.v{border-color:var(--gold);color:var(--gold);}
+.db.v:hover{background:var(--gold);color:#0d1a12;}
+
+/* QUIZ CARD */
+.qzc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.4rem;transition:.25s;}
+.qzc:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.qzt{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent2);margin-bottom:.5rem;}
+.qzm{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem;}
+.qzp{padding:.2rem .6rem;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.68rem;}
+.ab{padding:.2rem .7rem;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.68rem;}
+.a2{background:rgba(76,175,130,.1);color:var(--accent2);border:1px solid rgba(76,175,130,.2);}
+.a1{background:rgba(201,168,76,.1);color:var(--gold2);border:1px solid rgba(201,168,76,.2);}
+.a0{background:rgba(220,80,60,.1);color:#f09090;border:1px solid rgba(220,80,60,.2);}
+.stb{width:100%;padding:.6rem;background:linear-gradient(135deg,var(--accent),#3d9e6e);border:none;border-radius:8px;color:#0d1a12;font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s;}
+.stb:hover{box-shadow:0 4px 16px rgba(76,175,130,.3);}
+.stb:disabled{background:var(--bg3);color:var(--muted);cursor:not-allowed;box-shadow:none;}
+
+/* QUIZ SCREEN */
+#quizScreen{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;}
+.qhdr{padding:1rem 2rem;background:rgba(13,26,18,.95);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.qpw{flex:1;margin:0 1.5rem;}
+.qpb{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.qpf{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:3px;transition:width .4s;}
+.qtmr{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--gold2);min-width:60px;text-align:center;padding:.3rem .8rem;background:var(--bg3);border-radius:8px;border:1px solid var(--border);}
+.qtmr.danger{color:var(--red);border-color:rgba(224,85,85,.4);animation:bl .8s ease-in-out infinite;}
+@keyframes bl{0%,100%{opacity:1;}50%{opacity:.5;}}
+.qbody{max-width:720px;margin:2rem auto;padding:0 1.5rem 3rem;}
+.qnl{font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--muted);margin-bottom:.5rem;}
+.qtxt{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--text);line-height:1.5;margin-bottom:1.6rem;}
+.opts{display:flex;flex-direction:column;gap:.7rem;}
+.ob{padding:.9rem 1.2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1.05rem;cursor:pointer;transition:.2s;text-align:left;display:flex;align-items:center;gap:.8rem;}
+.ob:hover:not(:disabled){border-color:var(--accent);background:var(--green);}
+.ob.correct{border-color:var(--accent);background:rgba(76,175,130,.15);color:var(--accent2);}
+.ob.wrong{border-color:var(--red);background:rgba(224,85,85,.1);color:#f09090;}
+.ob:disabled{cursor:not-allowed;}
+.ol{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.73rem;flex-shrink:0;}
+.nxb{margin-top:1.5rem;padding:.72rem 2rem;background:linear-gradient(135deg,var(--accent),#3d9e6e);border:none;border-radius:8px;color:#0d1a12;font-family:'JetBrains Mono',monospace;font-size:.83rem;font-weight:600;cursor:pointer;display:none;}
+
+/* RESULT */
+#resultScreen{display:none;position:fixed;inset:0;background:var(--bg);z-index:600;overflow-y:auto;}
+.rsi{max-width:600px;margin:0 auto;padding:3rem 1.5rem;text-align:center;}
+.rej{font-size:4rem;margin-bottom:1rem;}
+.rsc{font-family:'Playfair Display',serif;font-size:3rem;color:var(--accent2);margin-bottom:.2rem;}
+.rsl{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted);letter-spacing:.08em;margin-bottom:1.8rem;}
+.rsb{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.4rem;text-align:left;margin-bottom:1.4rem;}
+.rbr{display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border);}
+.rbr:last-child{border-bottom:none;}
+.rbl{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);}
+.rbv{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);}
+
+/* LEADERBOARD */
+.lbw{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:1.4rem;}
+.lbh{padding:.8rem 1.3rem;background:var(--bg3);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);display:grid;grid-template-columns:44px 1fr 80px 80px;gap:.5rem;letter-spacing:.06em;}
+.lbr{padding:.8rem 1.3rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:44px 1fr 80px 80px;gap:.5rem;align-items:center;transition:.15s;}
+.lbr:last-child{border-bottom:none;}
+.lbr.me{background:rgba(76,175,130,.06);}
+.lbrk{font-family:'Playfair Display',serif;font-size:1.1rem;font-style:italic;color:var(--muted);}
+.lbrk.g{color:var(--gold2);}
+.lbrk.s{color:#c0c8d0;}
+.lbrk.b{color:#cd8050;}
+.lbn{font-size:.97rem;color:var(--text);}
+.lbs{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent2);text-align:center;}
+.lbt{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);text-align:center;}
+
+/* ADMIN */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.8rem;position:relative;overflow:hidden;margin-bottom:1.4rem;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.fg{margin-bottom:1rem;}
+.fl{display:block;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.32rem;text-transform:uppercase;}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.62rem .9rem;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;transition:.2s;outline:none;}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(76,175,130,.1);}
+.fi::placeholder{color:var(--muted);opacity:.5;}
+select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237aaa90'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .8rem center;padding-right:2rem;}
+.fs{width:100%;padding:.78rem;background:linear-gradient(135deg,var(--accent),#3d9e6e);border:none;border-radius:8px;color:#0d1a12;font-family:'JetBrains Mono',monospace;font-size:.83rem;font-weight:600;cursor:pointer;transition:.2s;margin-top:.3rem;}
+.fs:hover{box-shadow:0 4px 16px rgba(76,175,130,.3);}
+.fs:disabled{background:var(--bg3);color:var(--muted);cursor:not-allowed;}
+.msg{padding:.62rem 1rem;border-radius:8px;font-size:.88rem;margin-bottom:.8rem;display:none;}
+.msg.err{background:rgba(200,60,60,.1);border:1px solid rgba(200,60,60,.3);color:#f08080;display:block;}
+.msg.ok{background:rgba(76,175,130,.1);border:1px solid rgba(76,175,130,.3);color:var(--accent2);display:block;}
+.ainfo{background:rgba(76,130,175,.1);border:1px solid rgba(76,130,175,.25);color:#80b8f0;padding:.85rem 1rem;border-radius:10px;margin-bottom:1.2rem;font-size:.9rem;display:flex;gap:.6rem;}
+.qqitem{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.8rem;}
+.qqhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+.rmb{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.2rem .4rem;border-radius:4px;transition:.2s;}
+.rmb:hover{color:#f08080;background:rgba(200,60,60,.1);}
+.ogrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem;}
+.crow{display:flex;gap:.5rem;align-items:center;margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);}
+.crow select.fi{width:auto;padding:.28rem .7rem;font-size:.73rem;}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.md{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.2rem;width:min(420px,92vw);position:relative;animation:sup .3s ease;}
+@keyframes sup{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.mcl{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s;}
+.mcl:hover{background:var(--green);color:var(--text);}
+.md h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--accent2);margin-bottom:.3rem;}
+.md p{color:var(--muted);font-size:.92rem;margin-bottom:1.4rem;}
+.swa{text-align:center;margin-top:1rem;font-size:.9rem;color:var(--muted);}
+.swa a{color:var(--accent);cursor:pointer;text-decoration:underline;}
+.uch{display:flex;align-items:center;gap:.4rem;padding:.28rem .7rem;background:var(--green);border:1px solid var(--border);border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--accent2);}
+.udt{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+.empty{text-align:center;padding:3rem 2rem;color:var(--muted);}
+.empty .ei{font-size:2.5rem;margin-bottom:.7rem;opacity:.4;}
+.empty h3{font-family:'Playfair Display',serif;color:var(--muted);margin-bottom:.3rem;}
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:.75rem 1.1rem;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--accent2);z-index:9997;transform:translateY(16px);opacity:0;transition:.3s;max-width:290px;}
+#toast.show{transform:translateY(0);opacity:1;}
+@media(max-width:600px){
+  header{padding:.8rem 1rem;}.logo-text{font-size:1.1rem;}nav{gap:.25rem;}.nb{padding:.32rem .6rem;font-size:.68rem;}
+  .ogrid{grid-template-columns:1fr;}.qhdr{padding:.7rem 1rem;}.qpw{margin:0 .8rem;}
+  .lbh,.lbr{grid-template-columns:36px 1fr 60px 60px;padding:.7rem .9rem;}
+}
+</style>
+</head>
+<body>
+<div id="pageLoader"><div class="ld-icon">∑</div><div class="ld-txt">Loading MathShare...</div></div>
+<div id="topBar"></div>
+<div id="mathbg"></div>
+
+<header>
+  <div class="logo" onclick="goHome()">
+    <div class="logo-icon">∑</div>
+    <div class="logo-text">Math<span>Share</span></div>
+  </div>
+  <nav>
+    <button class="nb" onclick="goHome()">Home</button>
+    <div id="adminNav" style="display:none">
+      <button class="nb" onclick="gotoAdmin()">Admin</button>
+    </div>
+    <div id="authArea"><button class="nb pri" onclick="openM('login')">Login</button></div>
+    <div id="userArea" style="display:none;align-items:center;gap:.5rem;">
+      <div class="uch"><div class="udt"></div><span id="uChip">User</span></div>
+      <button class="nb" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+</header>
+
+<div id="app">
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hf">∫ knowledge dt = ∞</div>
+    <h1>Jay Sir's Mathematics<br>Resource Hub</h1>
+    <p>Notes, PPTs, PYQs aur Quizzes — apni class chuniye:</p>
+    <div class="ccards">
+      <div class="ccard" onclick="selectClass(9)">
+        <div class="cnum">9<sup style="font-size:1.5rem">th</sup></div>
+        <div class="clbl">Class</div><div class="csub">Mathematics</div>
+      </div>
+      <div class="ccard" onclick="selectClass(10)">
+        <div class="cnum">10<sup style="font-size:1.5rem">th</sup></div>
+        <div class="clbl">Class</div><div class="csub">Mathematics</div>
+      </div>
+    </div>
+    <div class="srow">
+      <div class="st"><div class="stn" id="stF">0</div><div class="stl">Resources</div></div>
+      <div class="st"><div class="stn" id="stQ">0</div><div class="stl">Quizzes</div></div>
+      <div class="st"><div class="stn" id="stS">0</div><div class="stl">Students</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- CLASS PAGE -->
+<div class="page" id="page-class">
+  <div class="pi">
+    <button class="bbtn" onclick="goHome()">← Back</button>
+    <div class="ptit" id="clsTitle">Class 9</div>
+    <div class="psub">Section chuniye:</div>
+    <div class="tabs" id="clsTabs">
+      <button class="tb active" onclick="switchTab('notes',this)">📄 Notes</button>
+      <button class="tb" onclick="switchTab('ppt',this)">📊 PPTs</button>
+      <button class="tb" onclick="switchTab('pyq',this)">📝 PYQ</button>
+      <button class="tb" onclick="switchTab('quiz',this)">🎯 Quizzes</button>
+    </div>
+    <div id="fileSec">
+      <div id="clsFG" class="fgrid"></div>
+      <div id="clsFE" class="empty" style="display:none"><div class="ei">📂</div><h3>Koi file nahi abhi</h3><p>Admin jald add karega.</p></div>
+    </div>
+    <div id="quizSec" style="display:none">
+      <div id="clsQG" class="fgrid"></div>
+      <div id="clsQE" class="empty" style="display:none"><div class="ei">🎯</div><h3>Koi quiz nahi abhi</h3></div>
+      <div id="lbSec" style="margin-top:2.5rem;display:none">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent2);margin-bottom:.8rem;">🏆 Leaderboard</div>
+        <div id="lbSel" style="margin-bottom:1rem;"></div>
+        <div class="lbw">
+          <div class="lbh"><span>Rank</span><span>Student</span><span style="text-align:center">Score</span><span style="text-align:center">Time</span></div>
+          <div id="lbRows"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div class="pi">
+    <div class="ptit">Admin Panel</div>
+    <div class="psub">Files aur Quizzes manage karo</div>
+    <div class="tabs">
+      <button class="tb active" id="atF" onclick="adminTab('files',this)">📁 File Upload</button>
+      <button class="tb" id="atQ" onclick="adminTab('quiz',this)">🎯 Quiz Banao</button>
+      <button class="tb" id="atM" onclick="adminTab('manage',this)">⚙️ Manage</button>
+    </div>
+
+    <div id="adFiles">
+      <div class="card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--accent2);margin-bottom:1.1rem;">Nai File Add Karo</h3>
+        <div class="ainfo"><span>ℹ️</span><span>Drive → Share → "Anyone with the link" → Viewer → link copy karo</span></div>
+        <div class="fg"><label class="fl">File Title</label><input class="fi" id="fT" type="text" placeholder="e.g. Polynomials Chapter Notes"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+          <div class="fg"><label class="fl">Class</label><select class="fi" id="fC"><option value="9">Class 9</option><option value="10">Class 10</option></select></div>
+          <div class="fg"><label class="fl">Type</label><select class="fi" id="fTy"><option value="notes">Notes (PDF)</option><option value="ppt">PPT / Slides</option><option value="pyq">PYQ</option></select></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Google Drive Link</label>
+          <input class="fi" id="fL" type="url" placeholder="drive.google.com/file/d/... ya docs.google.com/presentation/d/...">
+          <div style="margin-top:.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:.6rem .9rem;font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--muted);line-height:1.8;">
+            <span style="color:var(--gold);">✅</span> /file/d/ID/view &nbsp;·&nbsp; /presentation/d/ID &nbsp;·&nbsp; /document/d/ID
+          </div>
+        </div>
+        <div id="fMsg" class="msg"></div>
+        <button class="fs" id="fBtn" onclick="addFile()">➕ File Add Karo</button>
+      </div>
+    </div>
+
+    <div id="adQuiz" style="display:none">
+      <div class="card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--accent2);margin-bottom:1.1rem;">Naya Quiz Banao</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+          <div class="fg"><label class="fl">Quiz Title</label><input class="fi" id="qT" placeholder="e.g. Polynomials Test"></div>
+          <div class="fg"><label class="fl">Chapter/Topic</label><input class="fi" id="qTp" placeholder="e.g. Polynomials"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;">
+          <div class="fg"><label class="fl">Class</label><select class="fi" id="qC"><option value="9">Class 9</option><option value="10">Class 10</option></select></div>
+          <div class="fg"><label class="fl">Timer (minutes)</label><input class="fi" id="qTm" type="number" value="15" min="1" max="180"></div>
+          <div class="fg"><label class="fl">Max Attempts</label><select class="fi" id="qAt"><option value="1">1 baar</option><option value="2" selected>2 baar</option></select></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);">QUESTIONS</span>
+          <button class="nb" onclick="addQ()" style="font-size:.7rem;padding:.32rem .8rem;">+ Question Add Karo</button>
+        </div>
+        <div id="qList"></div>
+        <div id="qMsg" class="msg"></div>
+        <button class="fs" id="qBtn" onclick="saveQuiz()">💾 Quiz Save Karo</button>
+      </div>
+    </div>
+
+    <div id="adManage" style="display:none">
+      <div class="card">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--accent2);margin-bottom:1rem;">Files & Quizzes</h3>
+        <div class="tabs" style="margin-bottom:1rem;">
+          <button class="tb active" id="mF" onclick="manageTab('files',this)">📁 Files</button>
+          <button class="tb" id="mQ" onclick="manageTab('quiz',this)">🎯 Quizzes</button>
+        </div>
+        <div id="mgFL" class="fgrid"></div>
+        <div id="mgQL" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- MODALS -->
+<div class="mo" id="modal-login">
+  <div class="md">
+    <button class="mcl" onclick="closeM('login')">×</button>
+    <h2>Welcome Back</h2><p>Login karke resources access karo</p>
+    <div id="lMsg" class="msg"></div>
+    <div class="fg"><label class="fl">Email</label><input class="fi" id="lE" type="email" placeholder="aapka@email.com"></div>
+    <div class="fg"><label class="fl">Password</label><input class="fi" id="lP" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="fs" onclick="doLogin()">Login →</button>
+    <div class="swa">Account nahi hai? <a onclick="switchM('login','register')">Register karo</a></div>
+  </div>
+</div>
+<div class="mo" id="modal-register">
+  <div class="md">
+    <button class="mcl" onclick="closeM('register')">×</button>
+    <h2>Account Banao</h2><p>Free mein register karo</p>
+    <div id="rMsg" class="msg"></div>
+    <div class="fg"><label class="fl">Naam</label><input class="fi" id="rN" type="text" placeholder="Poora naam"></div>
+    <div class="fg"><label class="fl">Email</label><input class="fi" id="rE" type="email" placeholder="aapka@email.com"></div>
+    <div class="fg"><label class="fl">Password</label><input class="fi" id="rP" type="password" placeholder="Min 6 characters"></div>
+    <button class="fs" onclick="doRegister()">Account Banao →</button>
+    <div class="swa">Pehle se account hai? <a onclick="switchM('register','login')">Login karo</a></div>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="quizScreen">
+  <div class="qhdr">
+    <button class="nb" onclick="exitQuiz()" style="font-size:.7rem;">✕ Exit</button>
+    <div class="qpw">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.25rem;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);" id="qPL">Q 1/10</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);" id="qSL">Score: 0</span>
+      </div>
+      <div class="qpb"><div class="qpf" id="qPF" style="width:0%"></div></div>
+    </div>
+    <div class="qtmr" id="qTE">15:00</div>
+  </div>
+  <div class="qbody">
+    <div class="qnl" id="qNL">Question 1 of 10</div>
+    <div class="qtxt" id="qTX"></div>
+    <div class="opts" id="qOP"></div>
+    <button class="nxb" id="qNB" onclick="nextQ()">Next →</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen">
+  <div class="rsi">
+    <div class="rej" id="rEj">🎉</div>
+    <div class="rsc" id="rSc">8/10</div>
+    <div class="rsl">AAPKA SCORE</div>
+    <div class="rsb">
+      <div class="rbr"><span class="rbl">Sahi Jawab</span><span class="rbv" id="rCr" style="color:var(--accent2)">—</span></div>
+      <div class="rbr"><span class="rbl">Galat Jawab</span><span class="rbv" id="rWr" style="color:var(--red)">—</span></div>
+      <div class="rbr"><span class="rbl">Time Liya</span><span class="rbv" id="rTm" style="color:var(--gold2)">—</span></div>
+      <div class="rbr"><span class="rbl">Percentage</span><span class="rbv" id="rPc">—</span></div>
+    </div>
+    <button class="fs" style="max-width:260px;margin:0 auto .5rem;" onclick="closeResult()">← Wapas Class Par</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent2);margin:1.5rem 0 .7rem;">🏆 Leaderboard</div>
+    <div class="lbw">
+      <div class="lbh"><span>Rank</span><span>Student</span><span style="text-align:center">Score</span><span style="text-align:center">Time</span></div>
+      <div id="rLB"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, getDoc, getDocs, setDoc, deleteDoc, query, where, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── FIREBASE ──
+const app = initializeApp({
+  apiKey:"AIzaSyAL4cU6rmpQoM69up4uvmzEQKZlip7u1PM",
+  authDomain:"mathshare-86fcc.firebaseapp.com",
+  projectId:"mathshare-86fcc",
+  storageBucket:"mathshare-86fcc.firebasestorage.app",
+  messagingSenderId:"266795810619",
+  appId:"1:266795810619:web:8e469936873264109dc11e"
+});
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const ADMIN_EMAIL = 'jay@admin.com';
+const AUTO_DELETE_DAYS = 912; // 2.5 years
+
+// ── STATE ──
+let S = { user:null, cls:null, tab:'notes', files:[], quizzes:[] };
+let QZ = { quiz:null, qs:[], cur:0, score:0, start:0, tmr:null, answered:false, left:0 };
+let qCnt = 0;
+
+// ── MATH BG ──
+const syms=['∫','∑','π','√','∞','∂','∇','Δ','α','β','γ','λ','θ','≈','∈','x²','dx','lim','sin','cos'];
+const bg=document.getElementById('mathbg');
+for(let i=0;i<22;i++){const e=document.createElement('div');e.className='msym';e.textContent=syms[i%syms.length];e.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;font-size:${1+Math.random()*3.5}rem;animation-delay:${Math.random()*10}s;animation-duration:${15+Math.random()*15}s;font-family:'Crimson Pro',serif;`;bg.appendChild(e);}
+
+// ── UTILS ──
+function bar(on){const b=document.getElementById('topBar');b.classList.toggle('on',on);}
+function hideLoader(){const l=document.getElementById('pageLoader');l.classList.add('hide');setTimeout(()=>l.style.display='none',600);}
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');}
+function showMsg(el,t,tx){el.className='msg '+(t==='err'?'err':'ok');el.textContent=tx;el.style.display='block';setTimeout(()=>el.style.display='none',5000);}
+function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+function fmt(s){const m=Math.floor(s/60);return m>0?`${m}m ${s%60}s`:`${s}s`;}
+function rc(i){return i===0?'g':i===1?'s':i===2?'b':'';}
+
+// ── DRIVE ──
+function extractId(url){
+  const ps=[/\/presentation\/d\/([a-zA-Z0-9_-]+)/,/\/document\/d\/([a-zA-Z0-9_-]+)/,/\/file\/d\/([a-zA-Z0-9_-]+)/,/\/d\/([a-zA-Z0-9_-]+)/,/[?&]id=([a-zA-Z0-9_-]+)/];
+  for(const p of ps){const m=url.match(p);if(m&&m[1].length>10)return m[1];}return null;
+}
+function mkLinks(url,id){
+  if(url.includes('/presentation/'))return{dl:`https://docs.google.com/presentation/d/${id}/export/pptx`,view:`https://docs.google.com/presentation/d/${id}/view`};
+  if(url.includes('/document/'))return{dl:`https://docs.google.com/document/d/${id}/export?format=docx`,view:`https://docs.google.com/document/d/${id}/view`};
+  return{dl:`https://drive.google.com/uc?export=download&id=${id}`,view:`https://drive.google.com/file/d/${id}/view`};
+}
+
+// ── NAV ──
+window.goHome = async function(){showPage('home');await loadStats();}
+window.gotoAdmin = function(){showPage('admin');adminTab('files',document.getElementById('atF'));}
+window.selectClass = async function(cls){
+  if(!S.user){openM('login');return;}
+  S.cls=String(cls);S.tab='notes';
+  document.getElementById('clsTitle').textContent='Class '+cls;
+  document.querySelectorAll('#clsTabs .tb').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('fileSec').style.display='block';
+  document.getElementById('quizSec').style.display='none';
+  showPage('class');
+  await loadClassData();
+}
+window.switchTab = async function(tab,btn){
+  S.tab=tab;
+  document.querySelectorAll('#clsTabs .tb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(tab==='quiz'){
+    document.getElementById('fileSec').style.display='none';
+    document.getElementById('quizSec').style.display='block';
+    renderQuizzes();await renderLb();
+  } else {
+    document.getElementById('fileSec').style.display='block';
+    document.getElementById('quizSec').style.display='none';
+    renderFiles();
+  }
+}
+
+// ── MODALS ──
+window.openM  = function(n){document.getElementById('modal-'+n).classList.add('open');}
+window.closeM = function(n){document.getElementById('modal-'+n).classList.remove('open');}
+window.switchM= function(a,b){closeM(a);openM(b);}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── AUTH ──
+window.doLogin = async function(){
+  const email=document.getElementById('lE').value.trim();
+  const pass=document.getElementById('lP').value;
+  const msg=document.getElementById('lMsg');
+  if(!email||!pass){showMsg(msg,'err','Email aur password dono bharo.');return;}
+  bar(true);
+  try{
+    await signInWithEmailAndPassword(auth,email,pass);
+    closeM('login');
+    document.getElementById('lE').value='';
+    document.getElementById('lP').value='';
+  }catch(e){
+    const errs={'auth/invalid-credential':'Email ya password galat hai.','auth/too-many-requests':'Bahut zyada tries — thodi der baad karo.','auth/user-not-found':'Email registered nahi hai.'};
+    showMsg(msg,'err',errs[e.code]||'Login nahi hua — dobara try karo.');
+  }
+  bar(false);
+}
+
+window.doRegister = async function(){
+  const name=document.getElementById('rN').value.trim();
+  const email=document.getElementById('rE').value.trim();
+  const pass=document.getElementById('rP').value;
+  const msg=document.getElementById('rMsg');
+  if(!name||!email||!pass){showMsg(msg,'err','Sabkuch bharo.');return;}
+  if(pass.length<6){showMsg(msg,'err','Password 6+ characters ka hona chahiye.');return;}
+  bar(true);
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    await updateProfile(cred.user,{displayName:name});
+    await setDoc(doc(db,'users',cred.user.uid),{
+      name,email,
+      createdAt:serverTimestamp(),
+      lastActive:serverTimestamp(),
+      isAdmin:false
+    });
+    closeM('register');
+    document.getElementById('rN').value='';
+    document.getElementById('rE').value='';
+    document.getElementById('rP').value='';
+  }catch(e){
+    const errs={'auth/email-already-in-use':'Yeh email pehle se registered hai.','auth/weak-password':'Password kamzor hai.'};
+    showMsg(msg,'err',errs[e.code]||'Registration nahi hui.');
+  }
+  bar(false);
+}
+
+window.doLogout = async function(){
+  await signOut(auth);
+  showToast('Logout ho gaye.');
+  goHome();
+}
+
+// ── AUTH STATE CHANGE ──
+onAuthStateChanged(auth, async(user)=>{
+  if(user){
+    const isAdmin = user.email===ADMIN_EMAIL;
+    S.user={uid:user.uid,name:user.displayName||user.email.split('@')[0],email:user.email,isAdmin};
+    document.getElementById('authArea').style.display='none';
+    document.getElementById('userArea').style.display='flex';
+    document.getElementById('uChip').textContent=S.user.name;
+    document.getElementById('adminNav').style.display=isAdmin?'block':'none';
+    // Update last active
+    if(!isAdmin){
+      try{await setDoc(doc(db,'users',user.uid),{lastActive:serverTimestamp()},{merge:true});}catch(e){}
+    }
+    // Auto-delete old data (only admin triggers)
+    if(isAdmin) autoDeleteOldData();
+    await loadStats();
+  } else {
+    S.user=null;
+    document.getElementById('authArea').style.display='flex';
+    document.getElementById('userArea').style.display='none';
+    document.getElementById('adminNav').style.display='none';
+  }
+  hideLoader();
+});
+
+// ── AUTO DELETE (2.5 years) ──
+async function autoDeleteOldData(){
+  try{
+    const cutoff=new Date();
+    cutoff.setDate(cutoff.getDate()-AUTO_DELETE_DAYS);
+    const cutTs=Timestamp.fromDate(cutoff);
+    // Delete old results
+    const oldR=await getDocs(query(collection(db,'results'),where('createdAt','<',cutTs)));
+    const dels=[];
+    oldR.forEach(d=>dels.push(deleteDoc(d.ref)));
+    // Delete old inactive users
+    const oldU=await getDocs(query(collection(db,'users'),where('lastActive','<',cutTs)));
+    oldU.forEach(d=>dels.push(deleteDoc(d.ref)));
+    if(dels.length>0){
+      await Promise.all(dels);
+      console.log(`Auto-cleaned ${dels.length} old records (2.5yr+)`);
+    }
+  }catch(e){console.log('Auto-clean skipped:',e.message);}
+}
+
+// ── LOAD DATA ──
+async function loadClassData(){
+  bar(true);
+  try{
+    const [fSnap,qSnap]=await Promise.all([
+      getDocs(query(collection(db,'files'),where('cls','==',S.cls),orderBy('createdAt','desc'))),
+      getDocs(query(collection(db,'quizzes'),where('cls','==',S.cls),orderBy('createdAt','desc')))
+    ]);
+    S.files=fSnap.docs.map(d=>({id:d.id,...d.data()}));
+    S.quizzes=qSnap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){showToast('Data load nahi hua — refresh karo.');}
+  bar(false);
+  if(S.tab==='quiz'){renderQuizzes();renderLb();}else renderFiles();
+}
+
+async function loadStats(){
+  try{
+    const[fS,qS,uS]=await Promise.all([getDocs(collection(db,'files')),getDocs(collection(db,'quizzes')),getDocs(collection(db,'users'))]);
+    document.getElementById('stF').textContent=fS.size;
+    document.getElementById('stQ').textContent=qS.size;
+    document.getElementById('stS').textContent=uS.size;
+  }catch(e){}
+}
+
+// ── RENDER FILES ──
+const tIcon={notes:'📄',ppt:'📊',pyq:'📝'};
+const tBdg={notes:'bn',ppt:'bp',pyq:'bq'};
+const tNm={notes:'Notes',ppt:'PPT',pyq:'PYQ'};
+const tIc={notes:'n',ppt:'p',pyq:'q'};
+
+function renderFiles(){
+  const g=document.getElementById('clsFG'),e=document.getElementById('clsFE');
+  const files=S.files.filter(f=>f.type===S.tab);
+  if(!files.length){g.innerHTML='';e.style.display='block';return;}
+  e.style.display='none';
+  g.innerHTML=files.map(f=>`<div class="fc">
+    <div style="display:flex;align-items:center;gap:.7rem;">
+      <div class="fic ${tIc[f.type]||'n'}">${tIcon[f.type]||'📄'}</div>
+      <span class="fbg ${tBdg[f.type]||'bn'}">${tNm[f.type]||f.type}</span>
+    </div>
+    <div class="fn">${f.title}</div>
+    <div class="fm">🗓 ${f.date}</div>
+    <div class="dbs">
+      <a href="${f.link}" target="_blank" class="db">⬇ Download</a>
+      <a href="${f.viewLink}" target="_blank" class="db v">👁 View</a>
+    </div>
+  </div>`).join('');
+}
+
+// ── ADD FILE ──
+window.addFile = async function(){
+  const title=document.getElementById('fT').value.trim();
+  const cls=document.getElementById('fC').value;
+  const type=document.getElementById('fTy').value;
+  const link=document.getElementById('fL').value.trim();
+  const msg=document.getElementById('fMsg');
+  const btn=document.getElementById('fBtn');
+  if(!title||!link){showMsg(msg,'err','Title aur Drive link zaroori hain.');return;}
+  const fid=extractId(link);
+  if(!fid){showMsg(msg,'err','Drive link sahi nahi laga. Upar wala format dekho.');return;}
+  const{dl,view}=mkLinks(link,fid);
+  btn.disabled=true;btn.textContent='Saving...';
+  try{
+    const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    await addDoc(collection(db,'files'),{title,cls,type,link:dl,viewLink:view,date,createdAt:serverTimestamp()});
+    showMsg(msg,'ok','File add ho gayi! ✓');
+    document.getElementById('fT').value='';document.getElementById('fL').value='';
+    await loadStats();renderManageFiles();
+  }catch(e){showMsg(msg,'err','Save nahi hua — dobara try karo.');}
+  btn.disabled=false;btn.textContent='➕ File Add Karo';
+}
+
+window.deleteFile = async function(id){
+  if(!confirm('Yeh file remove karein?'))return;
+  try{await deleteDoc(doc(db,'files',id));showToast('File remove ho gayi.');renderManageFiles();await loadStats();}
+  catch(e){showToast('Delete nahi hua.');}
+}
+
+// ── QUIZ CREATOR ──
+window.addQ = function(){
+  qCnt++;const id='q'+qCnt;
+  const d=document.createElement('div');d.className='qqitem';d.id='qi_'+id;
+  d.innerHTML=`<div class="qqhdr"><span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);">Question ${qCnt}</span><button class="rmb" onclick="document.getElementById('qi_${id}').remove()">🗑 Remove</button></div>
+  <div class="fg"><input class="fi" id="qt_${id}" placeholder="Question likho yahan..." style="font-size:.97rem;"></div>
+  <div class="ogrid">
+    <input class="fi" id="qo1_${id}" placeholder="Option A" style="font-size:.9rem;">
+    <input class="fi" id="qo2_${id}" placeholder="Option B" style="font-size:.9rem;">
+    <input class="fi" id="qo3_${id}" placeholder="Option C" style="font-size:.9rem;">
+    <input class="fi" id="qo4_${id}" placeholder="Option D" style="font-size:.9rem;">
+  </div>
+  <div class="crow"><span>Sahi jawab:</span>
+    <select class="fi" id="qc_${id}"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+  </div>`;
+  document.getElementById('qList').appendChild(d);
+}
+
+window.saveQuiz = async function(){
+  const title=document.getElementById('qT').value.trim();
+  const cls=document.getElementById('qC').value;
+  const timer=parseInt(document.getElementById('qTm').value)||15;
+  const maxAtt=parseInt(document.getElementById('qAt').value)||2;
+  const topic=document.getElementById('qTp').value.trim();
+  const msg=document.getElementById('qMsg');
+  const btn=document.getElementById('qBtn');
+  if(!title){showMsg(msg,'err','Quiz title dalo.');return;}
+  const items=document.querySelectorAll('.qqitem');
+  if(!items.length){showMsg(msg,'err','Kam se kam 1 question add karo.');return;}
+  const questions=[];let valid=true;
+  items.forEach(item=>{
+    const id=item.id.replace('qi_','');
+    const qt=document.getElementById('qt_'+id)?.value.trim();
+    const o1=document.getElementById('qo1_'+id)?.value.trim();
+    const o2=document.getElementById('qo2_'+id)?.value.trim();
+    const o3=document.getElementById('qo3_'+id)?.value.trim();
+    const o4=document.getElementById('qo4_'+id)?.value.trim();
+    const correct=parseInt(document.getElementById('qc_'+id)?.value||0);
+    if(!qt||!o1||!o2||!o3||!o4){valid=false;return;}
+    questions.push({text:qt,options:[o1,o2,o3,o4],correct});
+  });
+  if(!valid){showMsg(msg,'err','Sabhi questions ke sabhi 4 options bharo.');return;}
+  btn.disabled=true;btn.textContent='Saving...';
+  try{
+    const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    await addDoc(collection(db,'quizzes'),{title,cls,topic,timer,maxAtt,questions,date,createdAt:serverTimestamp()});
+    showMsg(msg,'ok',`"${title}" save ho gaya! ${questions.length} questions. ✓`);
+    document.getElementById('qT').value='';document.getElementById('qTp').value='';
+    document.getElementById('qList').innerHTML='';qCnt=0;
+    await loadStats();renderManageQuizzes();
+  }catch(e){showMsg(msg,'err','Save nahi hua — dobara try karo.');}
+  btn.disabled=false;btn.textContent='💾 Quiz Save Karo';
+}
+
+window.deleteQuiz = async function(id){
+  if(!confirm('Yeh quiz delete karein? Saare results bhi hatenge.'))return;
+  try{
+    await deleteDoc(doc(db,'quizzes',id));
+    // Delete related results
+    const rSnap=await getDocs(query(collection(db,'results'),where('quizId','==',id)));
+    await Promise.all(rSnap.docs.map(d=>deleteDoc(d.ref)));
+    showToast('Quiz delete ho gaya.');renderManageQuizzes();await loadStats();
+  }catch(e){showToast('Delete nahi hua.');}
+}
+
+// ── RENDER QUIZZES ──
+async function getUserAttempts(qid){
+  if(!S.user)return 0;
+  try{
+    const snap=await getDocs(query(collection(db,'results'),where('quizId','==',qid),where('userEmail','==',S.user.email)));
+    return snap.size;
+  }catch(e){return 0;}
+}
+
+async function renderQuizzes(){
+  const g=document.getElementById('clsQG'),e=document.getElementById('clsQE');
+  if(!S.quizzes.length){g.innerHTML='';e.style.display='block';return;}
+  e.style.display='none';
+  // Get attempts for all quizzes
+  const attMap={};
+  await Promise.all(S.quizzes.map(async q=>{attMap[q.id]=await getUserAttempts(q.id);}));
+  g.innerHTML=S.quizzes.map(q=>{
+    const att=attMap[q.id]||0;
+    const left=q.maxAtt-att;
+    const ac=left>=2?'a2':left===1?'a1':'a0';
+    const al=left===0?'Attempts khatam':left===1?'1 attempt bacha':'2 attempts bache';
+    return`<div class="qzc">
+      <div class="qzt">${q.title}</div>
+      <div class="qzm">
+        <span class="qzp">🕐 ${q.timer} min</span>
+        <span class="qzp">❓ ${q.questions.length} Qs</span>
+        ${q.topic?`<span class="qzp">📚 ${q.topic}</span>`:''}
+        <span class="qzp">🗓 ${q.date}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
+        <span class="ab ${ac}">${al}</span>
+      </div>
+      <button class="stb" ${left===0?'disabled':''} onclick="startQuiz('${q.id}')">
+        ${left===0?'✓ Completed':'🎯 Quiz Start Karo'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ── LEADERBOARD ──
+async function renderLb(){
+  const qs=S.quizzes;
+  const sec=document.getElementById('lbSec');
+  if(!qs.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('lbSel').innerHTML=`<select class="fi" style="max-width:320px;" onchange="loadLbForQuiz(this.value)">
+    ${qs.map(q=>`<option value="${q.id}">${q.title}</option>`).join('')}
+  </select>`;
+  if(qs.length)await loadLbForQuiz(qs[0].id);
+}
+
+window.loadLbForQuiz = async function(qid){
+  try{
+    const snap=await getDocs(query(collection(db,'results'),where('quizId','==',qid)));
+    const best={};
+    snap.docs.forEach(d=>{
+      const r={id:d.id,...d.data()};
+      if(!best[r.userEmail]||r.score>best[r.userEmail].score||(r.score===best[r.userEmail].score&&r.timeTaken<best[r.userEmail].timeTaken))best[r.userEmail]=r;
+    });
+    const sorted=Object.values(best).sort((a,b)=>b.score-a.score||a.timeTaken-b.timeTaken);
+    document.getElementById('lbRows').innerHTML=sorted.length?sorted.map((r,i)=>`
+      <div class="lbr ${r.userEmail===S.user?.email?'me':''}">
+        <div class="lbrk ${rc(i)}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+        <div class="lbn">${r.userName}${r.userEmail===S.user?.email?' <span style="font-size:.65rem;color:var(--accent);font-family:\'JetBrains Mono\',monospace;">(aap)</span>':''}</div>
+        <div class="lbs">${r.score}/${r.total}</div>
+        <div class="lbt">${fmt(r.timeTaken)}</div>
+      </div>`).join(''):`<div class="empty" style="padding:1.5rem;"><p>Abhi kisi ne attempt nahi kiya.</p></div>`;
+  }catch(e){}
+}
+
+// ── QUIZ ENGINE ──
+window.startQuiz = async function(qid){
+  const quiz=S.quizzes.find(q=>q.id===qid);
+  if(!quiz)return;
+  const att=await getUserAttempts(qid);
+  if(att>=quiz.maxAtt){showToast('Aapke saare attempts use ho gaye!');return;}
+  QZ.quiz=quiz;QZ.qs=[...quiz.questions].sort(()=>Math.random()-.5);
+  QZ.cur=0;QZ.score=0;QZ.answered=false;QZ.start=Date.now();QZ.left=quiz.timer*60;
+  document.getElementById('quizScreen').style.display='block';
+  document.body.style.overflow='hidden';
+  renderQ();startTimer();
+}
+
+function renderQ(){
+  const q=QZ.qs[QZ.cur],tot=QZ.qs.length;
+  document.getElementById('qNL').textContent=`Question ${QZ.cur+1} of ${tot}`;
+  document.getElementById('qPL').textContent=`Q ${QZ.cur+1}/${tot}`;
+  document.getElementById('qSL').textContent=`Score: ${QZ.score}`;
+  document.getElementById('qPF').style.width=((QZ.cur/tot)*100)+'%';
+  document.getElementById('qTX').textContent=q.text;
+  const lbls=['A','B','C','D'];
+  document.getElementById('qOP').innerHTML=q.options.map((o,i)=>`
+    <button class="ob" onclick="selectOpt(${i})">
+      <span class="ol">${lbls[i]}</span>${o}
+    </button>`).join('');
+  document.getElementById('qNB').style.display='none';
+  QZ.answered=false;
+}
+
+window.selectOpt = function(idx){
+  if(QZ.answered)return;QZ.answered=true;
+  const q=QZ.qs[QZ.cur];
+  const btns=document.querySelectorAll('.ob');
+  btns.forEach(b=>b.disabled=true);
+  btns[idx].classList.add(idx===q.correct?'correct':'wrong');
+  if(idx!==q.correct)btns[q.correct].classList.add('correct');
+  if(idx===q.correct)QZ.score++;
+  const nb=document.getElementById('qNB');
+  nb.style.display='block';
+  nb.textContent=QZ.cur===QZ.qs.length-1?'Results Dekho 🏁':'Next Question →';
+}
+
+window.nextQ = function(){
+  QZ.cur++;
+  if(QZ.cur>=QZ.qs.length){finishQuiz();return;}
+  renderQ();
+}
+
+function startTimer(){
+  clearInterval(QZ.tmr);updateTimer();
+  QZ.tmr=setInterval(()=>{QZ.left--;updateTimer();if(QZ.left<=0){clearInterval(QZ.tmr);finishQuiz();}},1000);
+}
+function updateTimer(){
+  const m=Math.floor(QZ.left/60),s=QZ.left%60;
+  const el=document.getElementById('qTE');
+  el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  el.className='qtmr'+(QZ.left<=30?' danger':'');
+}
+
+async function finishQuiz(){
+  clearInterval(QZ.tmr);
+  const timeTaken=Math.floor((Date.now()-QZ.start)/1000);
+  const result={
+    quizId:QZ.quiz.id,quizTitle:QZ.quiz.title,
+    userEmail:S.user.email,userName:S.user.name,
+    score:QZ.score,total:QZ.qs.length,
+    timeTaken,createdAt:serverTimestamp(),
+    date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+  };
+  try{await addDoc(collection(db,'results'),result);}catch(e){}
+  document.getElementById('quizScreen').style.display='none';
+  document.body.style.overflow='';
+  showResult(result,QZ.quiz.id);
+}
+
+async function showResult(r,qid){
+  const pct=Math.round((r.score/r.total)*100);
+  document.getElementById('rEj').textContent=pct>=80?'🎉':pct>=60?'😊':'💪';
+  document.getElementById('rSc').textContent=`${r.score}/${r.total}`;
+  document.getElementById('rCr').textContent=r.score;
+  document.getElementById('rWr').textContent=r.total-r.score;
+  document.getElementById('rTm').textContent=fmt(r.timeTaken);
+  document.getElementById('rPc').textContent=pct+'%';
+  // Mini leaderboard
+  try{
+    const snap=await getDocs(query(collection(db,'results'),where('quizId','==',qid)));
+    const best={};
+    snap.docs.forEach(d=>{
+      const x={id:d.id,...d.data()};
+      if(!best[x.userEmail]||x.score>best[x.userEmail].score||(x.score===best[x.userEmail].score&&x.timeTaken<best[x.userEmail].timeTaken))best[x.userEmail]=x;
+    });
+    const sorted=Object.values(best).sort((a,b)=>b.score-a.score||a.timeTaken-b.timeTaken);
+    document.getElementById('rLB').innerHTML=sorted.map((x,i)=>`
+      <div class="lbr ${x.userEmail===S.user?.email?'me':''}">
+        <div class="lbrk ${rc(i)}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+        <div class="lbn">${x.userName}${x.userEmail===S.user?.email?' <span style="font-size:.65rem;color:var(--accent);font-family:\'JetBrains Mono\',monospace;">(aap)</span>':''}</div>
+        <div class="lbs">${x.score}/${x.total}</div>
+        <div class="lbt">${fmt(x.timeTaken)}</div>
+      </div>`).join('');
+  }catch(e){}
+  document.getElementById('resultScreen').style.display='block';
+}
+
+window.closeResult = async function(){
+  document.getElementById('resultScreen').style.display='none';
+  await renderQuizzes();await renderLb();
+}
+
+window.exitQuiz = function(){
+  if(!confirm('Quiz chhod dein? Progress save nahi hoga.'))return;
+  clearInterval(QZ.tmr);
+  document.getElementById('quizScreen').style.display='none';
+  document.body.style.overflow='';
+}
+
+// ── ADMIN TABS ──
+window.adminTab = function(tab,btn){
+  document.getElementById('adFiles').style.display=tab==='files'?'block':'none';
+  document.getElementById('adQuiz').style.display=tab==='quiz'?'block':'none';
+  document.getElementById('adManage').style.display=tab==='manage'?'block':'none';
+  document.querySelectorAll('#page-admin>.pi>.tabs .tb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(tab==='manage'){renderManageFiles();renderManageQuizzes();}
+}
+
+window.manageTab = function(tab,btn){
+  document.getElementById('mgFL').style.display=tab==='files'?'grid':'none';
+  document.getElementById('mgQL').style.display=tab==='quiz'?'block':'none';
+  document.querySelectorAll('#adManage .tabs .tb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+
+async function renderManageFiles(){
+  const el=document.getElementById('mgFL');
+  try{
+    const snap=await getDocs(query(collection(db,'files'),orderBy('createdAt','desc')));
+    const files=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!files.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">📭</div><h3>Koi file nahi</h3></div>';return;}
+    el.innerHTML=files.map(f=>`<div class="fc">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:.6rem;">
+          <span class="fbg ${tBdg[f.type]||'bn'}">${tNm[f.type]||f.type}</span>
+          <span class="fm">Class ${f.cls}</span>
+        </div>
+        <button class="rmb" onclick="deleteFile('${f.id}')">🗑</button>
+      </div>
+      <div class="fn">${f.title}</div>
+      <div class="fm">🗓 ${f.date}</div>
+      <div class="dbs"><a href="${f.viewLink}" target="_blank" class="db v" style="flex:1">👁 View</a></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--muted)">Load nahi hua.</p>';}
+}
+
+async function renderManageQuizzes(){
+  const el=document.getElementById('mgQL');
+  try{
+    const snap=await getDocs(query(collection(db,'quizzes'),orderBy('createdAt','desc')));
+    const quizzes=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!quizzes.length){el.innerHTML='<div class="empty"><div class="ei">🎯</div><h3>Koi quiz nahi</h3></div>';return;}
+    el.innerHTML=quizzes.map(q=>`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--accent2);">${q.title}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--muted);margin-top:.3rem;">Class ${q.cls} · ${q.questions.length} Qs · ${q.timer} min · max ${q.maxAtt} attempts · ${q.date}</div>
+        </div>
+        <button class="rmb" onclick="deleteQuiz('${q.id}')">🗑</button>
+      </div>`).join('');
+  }catch(e){}
+}
+
+// Init
+loadStats();
+</script>
+</body>
+</html>
